@@ -1,16 +1,68 @@
 package dev.akarah.network;
 
-import java.lang.reflect.Parameter;
+import dev.akarah.types.ApiUsage;
+import dev.akarah.types.BlockPos;
+
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Formats allow you to create a Packet using a high-level interface.
+ * This interface will handle the transformation of your packet's data into bytes.<br>
+ * An example format is:
+ * <code>
+ * RecordFormat.ofRecord(<br>
+ * RecordFormat.field(Format.varInt(), BlockPos::x),<br>
+ * RecordFormat.field(Format.varInt(), BlockPos::y),<br>
+ * RecordFormat.field(Format.varInt(), BlockPos::z),<br>
+ * BlockPos::new<br>
+ * )<br>
+ * </code>
+ * This example turns all 3 fields of a {@link BlockPos} into a single Format.
+ * The Format will output 3 VarInts (with {@link Format#varInt}), one for each field of the BlockPos.
+ *
+ * @param <T> The type this format will produce.
+ */
 public interface Format<T> {
+    /**
+     * Creates a new value of a type by reading from a PacketBuf.
+     *
+     * @param buf The PacketBuf to read from.
+     * @return The value read from the buffer.
+     */
     T read(PacketBuf buf);
+
+    /**
+     * Writes the provided value into a PacketBuf.
+     *
+     * @param buf   The PacketBuf to write into.
+     * @param value The value to write into the PacketBuf.
+     */
     void write(PacketBuf buf, T value);
+
+    /**
+     * Calculates the size of the data appended to a PacketBuf
+     * based off of the value provided.
+     *
+     * @param value The value to use to calculate the size of the data.
+     * @return The size of the data in bytes.
+     */
     int size(T value);
 
-    static<T> Format<T> ofSimple(
+
+    /**
+     * Creates a new Format with some provided functions.
+     *
+     * @param reader The function that transforms the read data into T.
+     * @param writer The function that writes the T's value into the PacketBuf.
+     * @param size   The function that calculates the size of T in the PacketBuf.
+     * @param <T>    The type this Format should produce.
+     * @return A new Format instance.
+     */
+    @ApiUsage.Internal
+    static <T> Format<T> ofSimple(
         Function<PacketBuf, T> reader,
         BiConsumer<PacketBuf, T> writer,
         Function<T, Integer> size
@@ -31,58 +83,6 @@ public interface Format<T> {
                 return size.apply(value);
             }
         };
-    }
-
-    record PacketField<RecordType, ParameterType>(
-        Format<ParameterType> parameter,
-        Function<RecordType, ParameterType> getter
-    ) {}
-
-    static<RecordType, ParameterType> PacketField<RecordType, ParameterType> field(
-        Format<ParameterType> parameter,
-        Function<RecordType, ParameterType> getter
-    ) {
-        return new PacketField<>(parameter, getter);
-    }
-
-    static<RecordType, Param1> Format<RecordType> ofRecord(
-        PacketField<RecordType, Param1> parameter1,
-        Function<Param1, RecordType> constructor
-    ) {
-        return Format.ofSimple(
-            buf -> {
-                return constructor.apply(parameter1.parameter.read(buf));
-            },
-            (buf, ty) -> {
-                parameter1.parameter.write(buf, parameter1.getter.apply(ty));
-            },
-            ty -> {
-                return parameter1.parameter.size(parameter1.getter.apply(ty));
-            }
-        );
-    }
-
-    static<RecordType, Param1, Param2> Format<RecordType> ofRecord(
-        PacketField<RecordType, Param1> parameter1,
-        PacketField<RecordType, Param2> parameter2,
-        BiFunction<Param1, Param2, RecordType> constructor
-    ) {
-        return Format.ofSimple(
-            buf -> {
-                return constructor.apply(
-                    parameter1.parameter.read(buf),
-                    parameter2.parameter.read(buf)
-                );
-            },
-            (buf, ty) -> {
-                parameter1.parameter.write(buf, parameter1.getter.apply(ty));
-                parameter2.parameter.write(buf, parameter2.getter.apply(ty));
-            },
-            ty -> {
-                return parameter1.parameter.size(parameter1.getter.apply(ty))
-                    + parameter2.parameter.size(parameter2.getter.apply(ty));
-            }
-        );
     }
 
     static Format<Byte> signedByte() {
@@ -127,5 +127,35 @@ public interface Format<T> {
 
     static Format<String> string() {
         return Format.ofSimple(PacketBuf::readString, PacketBuf::writeString, String::length);
+    }
+
+    static <OutputType> Format<Optional<OutputType>> optionalOf(Format<OutputType> subformat) {
+        return Format.ofSimple(
+            buf -> buf.writeOffset >= buf.buffer.length
+                ? Optional.<OutputType>empty()
+                : Optional.of((OutputType) subformat.read(buf)),
+            (buf, ty) -> ty.ifPresent(inner -> subformat.write(buf, inner)),
+            ty -> ty.map(subformat::size).orElse(0)
+        );
+    }
+
+    static <ArrayType> Format<ArrayType[]> arrayOf(Format<ArrayType> subformat) {
+        return Format.ofSimple(
+            buf -> {
+                var len = buf.readVarInt();
+                var arr = new Object[len];
+                for(int i = 0; i < len; i++) {
+                    arr[i] = subformat.read(buf);
+                }
+                return (ArrayType[]) arr;
+            },
+            (buf, ty) -> {
+                buf.writeVarInt(ty.length);
+                for (ArrayType arrayType : ty) {
+                    subformat.write(buf, arrayType);
+                }
+            },
+            ty -> Arrays.stream(ty).mapToInt(subformat::size).sum()
+        );
     }
 }
