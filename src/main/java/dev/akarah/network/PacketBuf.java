@@ -24,8 +24,8 @@ public class PacketBuf {
     int readOffset = 0;
     int writeOffset = 0;
 
-    private static final int SEGMENT_BITS = 0x7F;
-    private static final int CONTINUE_BIT = 0x80;
+    public static final int SEGMENT_BITS = 0x7F;
+    public static final int CONTINUE_BIT = 0x80;
 
     static VarHandle VH_SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.BIG_ENDIAN);
     static VarHandle VH_INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
@@ -53,6 +53,25 @@ public class PacketBuf {
         pb.buffer = new byte[this.buffer.length];
         System.arraycopy(this.buffer, 0, pb.buffer, 0, this.buffer.length);
         return pb;
+    }
+
+    public PacketBuf trimmed() {
+        var pb = new PacketBuf();
+        pb.buffer = new byte[this.writeOffset];
+        System.arraycopy(this.buffer, 0, pb.buffer, 0, this.writeOffset);
+        return pb;
+    }
+
+    public int capacity() {
+        return this.buffer.length;
+    }
+
+    public int writtenLength() {
+        return this.writeOffset;
+    }
+
+    public int readLength() {
+        return this.readOffset;
     }
 
     public PacketBuf writeByte(byte value) {
@@ -232,33 +251,6 @@ public class PacketBuf {
         return this;
     }
 
-//    public<T> Optional<T> readOptional(Function<PacketBuf, T> operation) {
-//        if(this.readOffset >= this.buffer.length)
-//            return Optional.empty();
-//        return Optional.of(operation.apply(this));
-//    }
-//
-//    public<T> PacketBuf writeOptional(Optional<T> value, BiFunction<PacketBuf, T, PacketBuf> function) {
-//        value.ifPresent(t -> function.apply(this, t));
-//        return this;
-//    }
-//
-//    public<T> T[] readArray(Function<PacketBuf, T> operation) {
-//        var length = readVarInt();
-//        var array = new Object[length];
-//        for(int i = 0; i < length; i++) {
-//            array[i] = operation.apply(this);
-//        }
-//        return (T[]) array;
-//    }
-//
-//    public<T> PacketBuf writeArray(T[] value, BiFunction<PacketBuf, T, PacketBuf> function) {
-//        writeVarInt(value.length);
-//        for(var element : value)
-//            function.apply(this, element);
-//        return this;
-//    }
-
     public BlockPos readPosition() {
         var val = readLong();
         return new BlockPos(
@@ -266,5 +258,32 @@ public class PacketBuf {
             (int) (val << 52 >> 52),
             (int) (val << 26 >> 38)
         );
+    }
+
+    public<T> Optional<T> optionally(Function<PacketBuf, T> operation) {
+        if(this.readOffset >= this.buffer.length)
+            return Optional.empty();
+        return Optional.of(operation.apply(this));
+    }
+
+    public<T> PacketBuf optionally(Optional<T> value, BiFunction<PacketBuf, T, PacketBuf> function) {
+        value.ifPresent(t -> function.apply(this, t));
+        return this;
+    }
+
+    public<T> T[] arrayOf(Function<PacketBuf, T> operation) {
+        var length = readVarInt();
+        var array = new Object[length];
+        for(int i = 0; i < length; i++) {
+            array[i] = operation.apply(this);
+        }
+        return (T[]) array;
+    }
+
+    public<T> PacketBuf arrayOf(T[] value, BiFunction<PacketBuf, T, PacketBuf> function) {
+        writeVarInt(value.length);
+        for(var element : value)
+            function.apply(this, element);
+        return this;
     }
 }
