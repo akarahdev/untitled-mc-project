@@ -2,12 +2,11 @@ package dev.akarah.server;
 
 import dev.akarah.network.Format;
 import dev.akarah.network.PacketBuf;
+import dev.akarah.protocol.PacketIdentifiers;
 import dev.akarah.protocol.ServerboundPacket;
-import dev.akarah.protocol.ServerboundPacketId;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -49,7 +48,7 @@ public class MinecraftServer {
                     packetBuf.writeByte(v);
                 var packetId = packetBuf.readVarInt();
 
-                var packetClass = ServerboundPacketId.packetById(packetId);
+                var packetClass = PacketIdentifiers.Serverbound.packetById(packetId);
                 var packetFormat = (Format<? extends ServerboundPacket>) packetClass.getField("FORMAT").get(null);
                 var packetData = packetFormat.read(packetBuf);
                 System.out.println("Packet length: " + packetLength);
