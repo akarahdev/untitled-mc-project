@@ -3,7 +3,7 @@ package dev.akarah.protocol.meta;
 import dev.akarah.protocol.Packet;
 
 public record PacketHashClass(
-        Class<Packet> packetClass,
+        Class<? extends Packet> packetClass,
         PacketFlow packetFlow,
         PacketStage packetStage
 ) {

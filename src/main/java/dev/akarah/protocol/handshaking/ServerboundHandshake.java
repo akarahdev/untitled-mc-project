@@ -11,8 +11,6 @@ public record ServerboundHandshake(
     int serverPort,
     int nextState
 ) implements ServerboundPacket {
-    public static int PACKET_ID = PacketIdentifiers.Serverbound.packetId(ServerboundHandshake.class);
-
     public static Format<ServerboundHandshake> FORMAT = RecordFormat.ofRecord(
         RecordFormat.field(Format.varInt(), ServerboundHandshake::protocolVersion),
         RecordFormat.field(Format.string(), ServerboundHandshake::serverAddress),
