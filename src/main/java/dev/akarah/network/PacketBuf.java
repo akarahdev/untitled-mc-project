@@ -42,6 +42,10 @@ public class PacketBuf {
         return pb;
     }
 
+    public byte[] toArray() {
+        return this.buffer;
+    }
+
     public PacketBuf withReading() {
         var pb = new PacketBuf();
         pb.buffer = this.buffer;

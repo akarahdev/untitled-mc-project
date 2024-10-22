@@ -3,6 +3,7 @@ package dev.akarah.network;
 import dev.akarah.types.ApiUsage;
 import dev.akarah.types.BlockPos;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -90,23 +91,31 @@ public interface Format<T> {
     }
 
     static Format<Short> signedShort() {
-        return Format.ofSimple(PacketBuf::readShort, PacketBuf::writeShort, it -> 1);
+        return Format.ofSimple(PacketBuf::readShort, PacketBuf::writeShort, it -> 2);
     }
 
     static Format<Integer> unsignedShort() {
-        return Format.ofSimple(PacketBuf::readUnsignedShort, PacketBuf::writeUnsignedShort, it -> 1);
+        return Format.ofSimple(PacketBuf::readUnsignedShort, PacketBuf::writeUnsignedShort, it -> 2);
     }
 
     static Format<Integer> signedInt() {
-        return Format.ofSimple(PacketBuf::readInt, PacketBuf::writeInt, it -> 1);
+        return Format.ofSimple(PacketBuf::readInt, PacketBuf::writeInt, it -> 4);
     }
 
     static Format<Long> signedLong() {
-        return Format.ofSimple(PacketBuf::readLong, PacketBuf::writeLong, it -> 1);
+        return Format.ofSimple(PacketBuf::readLong, PacketBuf::writeLong, it -> 8);
     }
 
-    static Integer calculateVarIntSize(long integer) {
-        return (integer & ~PacketBuf.SEGMENT_BITS) == 0 ? 1 : 1 + calculateVarIntSize(integer >>> 7);
+    static int calculateVarIntSize(long value) {
+        int size = 0;
+        while (true) {
+            if ((value & ~((long) PacketBuf.SEGMENT_BITS)) == 0) {
+                size++;
+                return size;
+            }
+            size++;
+            value >>= 7;
+        }
     }
 
     static Format<Integer> varInt() {
@@ -126,7 +135,9 @@ public interface Format<T> {
     }
 
     static Format<String> string() {
-        return Format.ofSimple(PacketBuf::readString, PacketBuf::writeString, String::length);
+        return Format.ofSimple(PacketBuf::readString, PacketBuf::writeString, it ->
+            it.getBytes(StandardCharsets.UTF_8).length
+                + Format.calculateVarIntSize(it.getBytes(StandardCharsets.UTF_8).length));
     }
 
     static <OutputType> Format<Optional<OutputType>> optionalOf(Format<OutputType> subformat) {

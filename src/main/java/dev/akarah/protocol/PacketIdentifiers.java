@@ -1,6 +1,7 @@
 package dev.akarah.protocol;
 
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
+import dev.akarah.protocol.login.ClientboundDisconnectLogin;
 import dev.akarah.protocol.meta.*;
 import dev.akarah.protocol.status.ClientboundPongResponse;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
@@ -19,18 +20,20 @@ public class PacketIdentifiers {
 
     static {
         SERVERBOUND_ID = new AtomicPacketIdTracker(
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0)
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0)
         );
         CLIENTBOUND_ID = new AtomicPacketIdTracker(
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0),
-                new AtomicInteger(0)
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0),
+            new AtomicInteger(0)
         );
 
         ID_TO_CLASS = new ConcurrentHashMap<>();
@@ -38,20 +41,24 @@ public class PacketIdentifiers {
 
         registerSPacket(ServerboundHandshake.class, PacketStage.HANDSHAKING);
 
+        registerSPacket(ServerboundStatusRequest.class, PacketStage.STATUS);
+        registerSPacket(ServerboundPingRequest.class, PacketStage.STATUS);
         registerCPacket(ClientboundStatusResponse.class, PacketStage.STATUS);
         registerCPacket(ClientboundPongResponse.class, PacketStage.STATUS);
-        registerSPacket(ServerboundPingRequest.class, PacketStage.STATUS);
-        registerSPacket(ServerboundStatusRequest.class, PacketStage.STATUS);
+
+
+        registerCPacket(ClientboundDisconnectLogin.class, PacketStage.LOGIN);
     }
 
     static void registerPacket(
-            Class<? extends Packet> packetClass,
-            PacketFlow flow,
-            PacketStage stage
+        Class<? extends Packet> packetClass,
+        PacketFlow flow,
+        PacketStage stage
     ) {
         var id = switch (flow) {
             case SERVERBOUND -> switch (stage) {
                 case HANDSHAKING -> SERVERBOUND_ID.handshaking().getAndIncrement();
+                case TRANSFER -> SERVERBOUND_ID.transfer().getAndIncrement();
                 case STATUS -> SERVERBOUND_ID.status().getAndIncrement();
                 case LOGIN -> SERVERBOUND_ID.login().getAndIncrement();
                 case CONFIGURATION -> SERVERBOUND_ID.configuration().getAndIncrement();
@@ -59,6 +66,7 @@ public class PacketIdentifiers {
             };
             case CLIENTBOUND -> switch (stage) {
                 case HANDSHAKING -> CLIENTBOUND_ID.handshaking().getAndIncrement();
+                case TRANSFER -> CLIENTBOUND_ID.transfer().getAndIncrement();
                 case STATUS -> CLIENTBOUND_ID.status().getAndIncrement();
                 case LOGIN -> CLIENTBOUND_ID.login().getAndIncrement();
                 case CONFIGURATION -> CLIENTBOUND_ID.configuration().getAndIncrement();
@@ -66,54 +74,56 @@ public class PacketIdentifiers {
             };
         };
         CLASS_TO_ID.put(
-                new PacketHashClass(packetClass, flow, stage),
-                new PacketHashId(id, flow, stage)
+            new PacketHashClass(packetClass, flow, stage),
+            new PacketHashId(id, flow, stage)
         );
         ID_TO_CLASS.put(
-                new PacketHashId(id, flow, stage),
-                new PacketHashClass(packetClass, flow, stage)
+            new PacketHashId(id, flow, stage),
+            new PacketHashClass(packetClass, flow, stage)
         );
     }
 
     static void registerSPacket(
-            Class<? extends ServerboundPacket> packetClass,
-            PacketStage stage
+        Class<? extends ServerboundPacket> packetClass,
+        PacketStage stage
     ) {
         var id = switch (stage) {
             case HANDSHAKING -> SERVERBOUND_ID.handshaking().getAndIncrement();
+            case TRANSFER -> SERVERBOUND_ID.transfer().getAndIncrement();
             case STATUS -> SERVERBOUND_ID.status().getAndIncrement();
             case LOGIN -> SERVERBOUND_ID.login().getAndIncrement();
             case CONFIGURATION -> SERVERBOUND_ID.configuration().getAndIncrement();
             case PLAY -> SERVERBOUND_ID.play().getAndIncrement();
         };
         CLASS_TO_ID.put(
-                new PacketHashClass(packetClass, PacketFlow.SERVERBOUND, stage),
-                new PacketHashId(id, PacketFlow.SERVERBOUND, stage)
+            new PacketHashClass(packetClass, PacketFlow.SERVERBOUND, stage),
+            new PacketHashId(id, PacketFlow.SERVERBOUND, stage)
         );
         ID_TO_CLASS.put(
-                new PacketHashId(id, PacketFlow.SERVERBOUND, stage),
-                new PacketHashClass(packetClass, PacketFlow.SERVERBOUND, stage)
+            new PacketHashId(id, PacketFlow.SERVERBOUND, stage),
+            new PacketHashClass(packetClass, PacketFlow.SERVERBOUND, stage)
         );
     }
 
     static void registerCPacket(
-            Class<? extends ClientboundPacket> packetClass,
-            PacketStage stage
+        Class<? extends ClientboundPacket> packetClass,
+        PacketStage stage
     ) {
         var id = switch (stage) {
             case HANDSHAKING -> CLIENTBOUND_ID.handshaking().getAndIncrement();
+            case TRANSFER -> CLIENTBOUND_ID.transfer().getAndIncrement();
             case STATUS -> CLIENTBOUND_ID.status().getAndIncrement();
             case LOGIN -> CLIENTBOUND_ID.login().getAndIncrement();
             case CONFIGURATION -> CLIENTBOUND_ID.configuration().getAndIncrement();
             case PLAY -> CLIENTBOUND_ID.play().getAndIncrement();
         };
         CLASS_TO_ID.put(
-                new PacketHashClass(packetClass, PacketFlow.CLIENTBOUND, stage),
-                new PacketHashId(id, PacketFlow.CLIENTBOUND, stage)
+            new PacketHashClass(packetClass, PacketFlow.CLIENTBOUND, stage),
+            new PacketHashId(id, PacketFlow.CLIENTBOUND, stage)
         );
         ID_TO_CLASS.put(
-                new PacketHashId(id, PacketFlow.CLIENTBOUND, stage),
-                new PacketHashClass(packetClass, PacketFlow.CLIENTBOUND, stage)
+            new PacketHashId(id, PacketFlow.CLIENTBOUND, stage),
+            new PacketHashClass(packetClass, PacketFlow.CLIENTBOUND, stage)
         );
     }
 
