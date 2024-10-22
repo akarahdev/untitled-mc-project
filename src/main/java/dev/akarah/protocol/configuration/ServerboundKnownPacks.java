@@ -4,9 +4,10 @@ import dev.akarah.network.Format;
 import dev.akarah.network.RecordFormat;
 import dev.akarah.protocol.ServerboundPacket;
 
+import java.util.List;
 import java.util.UUID;
 
-public record ServerboundKnownPacks(KnownPack[] knownPacks) implements ServerboundPacket {
+public record ServerboundKnownPacks(List<KnownPack> knownPacks) implements ServerboundPacket {
     public record KnownPack(
             String namespace,
             String id,

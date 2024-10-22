@@ -12,7 +12,7 @@ import java.util.UUID;
 public record ClientboundLoginSuccess(
         UUID uuid,
         String username,
-        Property[] properties,
+        List<Property> properties,
         byte strictErrorHandling
 ) implements ClientboundPacket {
     public record Property(

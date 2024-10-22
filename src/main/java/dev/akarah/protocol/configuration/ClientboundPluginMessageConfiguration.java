@@ -4,9 +4,11 @@ import dev.akarah.network.Format;
 import dev.akarah.network.RecordFormat;
 import dev.akarah.protocol.ClientboundPacket;
 
+import java.util.List;
+
 public record ClientboundPluginMessageConfiguration(
         String identifier,
-        Byte[] payload
+        List<Byte> payload
 ) implements ClientboundPacket {
     public static Format<ClientboundPluginMessageConfiguration> FORMAT = RecordFormat.ofRecord(
         RecordFormat.field(Format.string(), ClientboundPluginMessageConfiguration::identifier),

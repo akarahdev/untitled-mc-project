@@ -150,6 +150,30 @@ public class PacketBuf {
         return value;
     }
 
+    public float readFloat() {
+        var value = (float) VH_FLOAT.get(this.buffer, readOffset);
+        readOffset += Float.BYTES;
+        return value;
+    }
+
+    public PacketBuf writeFloat(float value) {
+        VH_FLOAT.set(this.buffer, writeOffset, value);
+        writeOffset += Float.BYTES;
+        return this;
+    }
+
+    public double readDouble() {
+        var value = (double) VH_DOUBLE.get(this.buffer, readOffset);
+        readOffset += Double.BYTES;
+        return value;
+    }
+
+    public PacketBuf writeDouble(double value) {
+        VH_DOUBLE.set(this.buffer, writeOffset, value);
+        writeOffset += Double.BYTES;
+        return this;
+    }
+
     public int readVarInt() {
         int value = 0;
         int position = 0;

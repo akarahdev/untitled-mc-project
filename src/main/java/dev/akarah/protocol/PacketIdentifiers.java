@@ -1,6 +1,6 @@
 package dev.akarah.protocol;
 
-import dev.akarah.protocol.configuration.ServerboundClientInformation;
+import dev.akarah.protocol.configuration.*;
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
 import dev.akarah.protocol.login.ClientboundLoginSuccess;
@@ -59,8 +59,23 @@ public class PacketIdentifiers {
         SERVERBOUND_ID.login().set(0x03);
         registerSPacket(ServerboundLoginAcknowledged.class, PacketStage.LOGIN);
 
+        registerCPacket(ClientboundCookieRequest.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundPluginMessageConfiguration.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundDisconnectConfiguration.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundFinishConfiguration.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundKeepAliveConfiguration.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundPingConfiguration.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundResetChat.class, PacketStage.CONFIGURATION);
 
         registerSPacket(ServerboundClientInformation.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundCookieResponse.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundPluginMessageConfiguration.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundAcknowledgeFinishConfiguration.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundKeepAliveConfiguration.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundPongConfiguration.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundResourcePackResponseConfiguration.class, PacketStage.CONFIGURATION);
+        registerSPacket(ServerboundKnownPacks.class, PacketStage.CONFIGURATION);
+
     }
 
     static void registerPacket(

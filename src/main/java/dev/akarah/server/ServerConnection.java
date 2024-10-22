@@ -143,7 +143,7 @@ public class ServerConnection {
         while (true) {
             var rb = readByte();
             if(rb == -1) {
-                throw new RuntimeException("socket ended?");
+                throw new SocketException("socket ended?");
             }
             currentByte = (byte) rb;
             value |= (currentByte & PacketBuf.SEGMENT_BITS) << position;

@@ -1,3 +1,4 @@
+import dev.akarah.protocol.configuration.*;
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
 import dev.akarah.protocol.login.ClientboundLoginSuccess;
@@ -7,6 +8,11 @@ import dev.akarah.protocol.meta.PacketStage;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundStatusRequest;
 import dev.akarah.server.MinecraftServer;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class TestServer {
     public static void main(String[] args) {
@@ -27,13 +33,21 @@ public class TestServer {
             packetEvent.connection().send(new ClientboundLoginSuccess(
                     packetEvent.packet().uuid(),
                     packetEvent.packet().username(),
-                    new ClientboundLoginSuccess.Property[]{},
+                    List.of(),
                     (byte) 1
             ));
         });
 
         server.eventManager().registerEvent(ServerboundLoginAcknowledged.class, packetEvent -> {
             packetEvent.connection().stage(PacketStage.CONFIGURATION);
+        });
+
+        server.eventManager().registerEvent(ServerboundClientInformation.class, packetEvent -> {
+            packetEvent.connection().send(new ClientboundFinishConfiguration());
+        });
+
+        server.eventManager().registerEvent(ServerboundAcknowledgeFinishConfiguration.class, packetEvent -> {
+            packetEvent.connection().stage(PacketStage.PLAY);
         });
         server.start();
     }

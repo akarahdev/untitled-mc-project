@@ -1,12 +1,12 @@
 package dev.akarah.network;
 
+import dev.akarah.nbt.element.CompoundTag;
+import dev.akarah.nbt.element.Tag;
 import dev.akarah.types.ApiUsage;
 import dev.akarah.types.BlockPos;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -137,6 +137,21 @@ public interface Format<T> {
         );
     }
 
+    static Format<CompoundTag> nbtCompound() {
+        return Format.ofSimple(
+            buf -> {
+                // read compound tag
+                buf.readByte();
+                return new CompoundTag(buf);
+            },
+            (buf, nbt) -> {
+                buf.writeByte((byte) Tag.COMPOUND.id());
+                nbt.write(buf);
+            },
+            (ty) -> 0
+        );
+    }
+
     static Format<UUID> uuid() {
         return Format.ofSimple(
                 PacketBuf::readUuid,
@@ -161,43 +176,42 @@ public interface Format<T> {
         );
     }
 
-    static <ArrayType> Format<ArrayType[]> arrayOf(Format<ArrayType> subformat) {
+    static <ArrayType> Format<List<ArrayType>> arrayOf(Format<ArrayType> subformat) {
         return Format.ofSimple(
             buf -> {
                 var len = buf.readVarInt();
-                var arr = new Object[len];
+                var arr = new ArrayList<ArrayType>(len);
                 for(int i = 0; i < len; i++) {
-                    arr[i] = subformat.read(buf);
+                    arr.set(i, subformat.read(buf));
                 }
-                return (ArrayType[]) arr;
+                return arr;
             },
             (buf, ty) -> {
-                buf.writeVarInt(ty.length);
+                buf.writeVarInt(ty.size());
                 for (ArrayType arrayType : ty) {
                     subformat.write(buf, arrayType);
                 }
             },
-            ty -> Arrays.stream(ty).mapToInt(subformat::size).sum()
-                    + calculateVarIntSize(ty.length)
+            ty -> ty.stream().mapToInt(subformat::size).sum()
+                    + calculateVarIntSize(ty.size())
         );
     }
 
-    static <ArrayType> Format<ArrayType[]> terminalArrayOf(Format<ArrayType> subformat) {
+    static <ArrayType> Format<List<ArrayType>> terminalArrayOf(Format<ArrayType> subformat) {
         return Format.ofSimple(
                 buf -> {
-                    var remainder = buf.buffer.length - buf.readOffset;
-                    var arr = new Object[remainder];
-                    for(int i = 0; i < remainder; i++) {
-                        arr[i] = subformat.read(buf);
+                    var arr = new ArrayList<ArrayType>();
+                    while(buf.readOffset < buf.buffer.length) {
+                        arr.add(subformat.read(buf));
                     }
-                    return (ArrayType[]) arr;
+                    return arr;
                 },
                 (buf, ty) -> {
                     for (ArrayType arrayType : ty) {
                         subformat.write(buf, arrayType);
                     }
                 },
-                ty -> Arrays.stream(ty).mapToInt(subformat::size).sum()
+                ty -> ty.stream().mapToInt(subformat::size).sum()
         );
     }
 }
