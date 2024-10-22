@@ -1,5 +1,6 @@
 package dev.akarah.protocol;
 
+import dev.akarah.protocol.configuration.ServerboundClientInformation;
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
 import dev.akarah.protocol.login.ClientboundLoginSuccess;
@@ -57,6 +58,9 @@ public class PacketIdentifiers {
         registerSPacket(ServerboundLoginStart.class, PacketStage.LOGIN);
         SERVERBOUND_ID.login().set(0x03);
         registerSPacket(ServerboundLoginAcknowledged.class, PacketStage.LOGIN);
+
+
+        registerSPacket(ServerboundClientInformation.class, PacketStage.CONFIGURATION);
     }
 
     static void registerPacket(

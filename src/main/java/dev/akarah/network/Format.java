@@ -181,4 +181,23 @@ public interface Format<T> {
                     + calculateVarIntSize(ty.length)
         );
     }
+
+    static <ArrayType> Format<ArrayType[]> terminalArrayOf(Format<ArrayType> subformat) {
+        return Format.ofSimple(
+                buf -> {
+                    var remainder = buf.buffer.length - buf.readOffset;
+                    var arr = new Object[remainder];
+                    for(int i = 0; i < remainder; i++) {
+                        arr[i] = subformat.read(buf);
+                    }
+                    return (ArrayType[]) arr;
+                },
+                (buf, ty) -> {
+                    for (ArrayType arrayType : ty) {
+                        subformat.write(buf, arrayType);
+                    }
+                },
+                ty -> Arrays.stream(ty).mapToInt(subformat::size).sum()
+        );
+    }
 }
