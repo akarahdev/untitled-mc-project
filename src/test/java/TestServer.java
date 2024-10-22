@@ -5,6 +5,7 @@ import dev.akarah.protocol.login.ClientboundLoginSuccess;
 import dev.akarah.protocol.login.ServerboundLoginAcknowledged;
 import dev.akarah.protocol.login.ServerboundLoginStart;
 import dev.akarah.protocol.meta.PacketStage;
+import dev.akarah.protocol.play.ClientboundLoginPlay;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundStatusRequest;
 import dev.akarah.server.MinecraftServer;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class TestServer {
     public static void main(String[] args) {
@@ -48,6 +50,30 @@ public class TestServer {
 
         server.eventManager().registerEvent(ServerboundAcknowledgeFinishConfiguration.class, packetEvent -> {
             packetEvent.connection().stage(PacketStage.PLAY);
+            packetEvent.connection().send(new ClientboundLoginPlay(
+                new ClientboundLoginPlay.PlayerData(1, false),
+                List.of("minecraft:overworld"),
+                new ClientboundLoginPlay.ServerRestrictions(
+                    1,
+                    32,
+                    32,
+                    false,
+                    true,
+                    true
+                ),
+                new ClientboundLoginPlay.DimensionData(
+                    0,
+                    "minecraft:overworld",
+                    0,
+                    (byte) 0,
+                    (byte) -1,
+                    false,
+                    true
+                ),
+                Optional.empty(),
+                12,
+                false
+            ));
         });
         server.start();
     }

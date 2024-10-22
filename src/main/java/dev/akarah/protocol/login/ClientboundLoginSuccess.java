@@ -3,7 +3,6 @@ package dev.akarah.protocol.login;
 import dev.akarah.network.Format;
 import dev.akarah.network.RecordFormat;
 import dev.akarah.protocol.ClientboundPacket;
-import dev.akarah.protocol.ServerboundPacket;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,7 @@ public record ClientboundLoginSuccess(
                                     RecordFormat.field(Format.string(), Property::name),
                                     RecordFormat.field(Format.string(), Property::value),
                                     RecordFormat.field(
-                                            Format.optionalOf(Format.string()),
+                                            Format.terminalOptionalOf(Format.string()),
                                             Property::signature
                                     ),
                                     Property::new

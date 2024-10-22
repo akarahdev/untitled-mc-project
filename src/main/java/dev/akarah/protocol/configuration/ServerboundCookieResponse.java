@@ -15,7 +15,7 @@ public record ServerboundCookieResponse(
     public static Format<ServerboundCookieResponse> FORMAT = RecordFormat.ofRecord(
         RecordFormat.field(Format.string(), ServerboundCookieResponse::identifier),
         RecordFormat.field(
-                Format.optionalOf(Format.arrayOf(Format.signedByte())),
+                Format.terminalOptionalOf(Format.arrayOf(Format.signedByte())),
                 ServerboundCookieResponse::payload),
         ServerboundCookieResponse::new
     );

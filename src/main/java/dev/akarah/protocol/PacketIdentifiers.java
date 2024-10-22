@@ -7,6 +7,7 @@ import dev.akarah.protocol.login.ClientboundLoginSuccess;
 import dev.akarah.protocol.login.ServerboundLoginAcknowledged;
 import dev.akarah.protocol.login.ServerboundLoginStart;
 import dev.akarah.protocol.meta.*;
+import dev.akarah.protocol.play.ClientboundLoginPlay;
 import dev.akarah.protocol.status.ClientboundPongResponse;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundPingRequest;
@@ -76,6 +77,8 @@ public class PacketIdentifiers {
         registerSPacket(ServerboundResourcePackResponseConfiguration.class, PacketStage.CONFIGURATION);
         registerSPacket(ServerboundKnownPacks.class, PacketStage.CONFIGURATION);
 
+        CLIENTBOUND_ID.play().set(0x2B);
+        registerCPacket(ClientboundLoginPlay.class, PacketStage.PLAY);
     }
 
     static void registerPacket(

@@ -93,6 +93,14 @@ public interface Format<T> {
         return Format.ofSimple(PacketBuf::readByte, PacketBuf::writeByte, it -> 1);
     }
 
+    static Format<Boolean> bool() {
+        return Format.ofSimple(
+            (buf) -> buf.readByte() == 1,
+            (buf, ty) -> buf.writeByte((byte) (ty ? 1 : 0)),
+            it -> 1
+        );
+    }
+
     static Format<Short> signedShort() {
         return Format.ofSimple(PacketBuf::readShort, PacketBuf::writeShort, it -> 2);
     }
@@ -161,17 +169,46 @@ public interface Format<T> {
     }
 
     static Format<String> string() {
-        return Format.ofSimple(PacketBuf::readString, PacketBuf::writeString, it ->
+        return Format.ofSimple(
+            PacketBuf::readString,
+            PacketBuf::writeString, it ->
             it.getBytes(StandardCharsets.UTF_8).length
                 + Format.calculateVarIntSize(it.getBytes(StandardCharsets.UTF_8).length));
     }
 
+    static Format<BlockPos> blockPos() {
+        return Format.ofSimple(
+            PacketBuf::readPosition,
+            PacketBuf::writePosition,
+            it -> Long.BYTES);
+    }
+
     static <OutputType> Format<Optional<OutputType>> optionalOf(Format<OutputType> subformat) {
+        return Format.ofSimple(
+            buf -> buf.readByte() == 0
+                ? Optional.<OutputType>empty()
+                : Optional.of(subformat.read(buf)),
+            (buf, ty) -> {
+                ty.ifPresentOrElse(
+                    inner -> {
+                        buf.writeByte((byte) 1);
+                        subformat.write(buf, inner);
+                    },
+                    () -> buf.writeByte((byte) 0)
+                );
+            },
+            ty -> ty.map(subformat::size).map(it -> it + 1).orElse(1)
+        );
+    }
+
+    static <OutputType> Format<Optional<OutputType>> terminalOptionalOf(Format<OutputType> subformat) {
         return Format.ofSimple(
             buf -> buf.writeOffset >= buf.buffer.length
                 ? Optional.<OutputType>empty()
                 : Optional.of(subformat.read(buf)),
-            (buf, ty) -> ty.ifPresent(inner -> subformat.write(buf, inner)),
+            (buf, ty) -> {
+                ty.ifPresent(inner -> subformat.write(buf, inner));
+            },
             ty -> ty.map(subformat::size).orElse(0)
         );
     }
