@@ -1,5 +1,7 @@
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
+import dev.akarah.protocol.login.ClientboundLoginSuccess;
+import dev.akarah.protocol.login.ServerboundLoginStart;
 import dev.akarah.protocol.meta.PacketStage;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundStatusRequest;
@@ -15,14 +17,20 @@ public class TestServer {
                 case 3 -> packetEvent.connection().stage(PacketStage.TRANSFER);
             }
             if(packetEvent.packet().nextState() == 2)
-                packetEvent.connection().send(new ClientboundDisconnectLogin("'ayo'"));
+                packetEvent.connection().send(new ClientboundDisconnectLogin("'Login currently unsupported'"));
         });
         server.eventManager().registerEvent(ServerboundStatusRequest.class, packetEvent -> {
             packetEvent.connection().send(new ClientboundStatusResponse("""
-                {
-                    "version": {}
-                }
-                """));
+{"version": {"name": "1.21.1","protocol": "767"},"description": {"text": "Hello from the test server!"}}""".trim()));
+        });
+
+        server.eventManager().registerEvent(ServerboundLoginStart.class, packetEvent -> {
+            packetEvent.connection().send(new ClientboundLoginSuccess(
+                    packetEvent.packet().uuid(),
+                    packetEvent.packet().username(),
+                    new ClientboundLoginSuccess.Property[]{},
+                    (byte) 1
+            ));
         });
         server.start();
     }

@@ -6,6 +6,7 @@ import dev.akarah.types.BlockPos;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -27,6 +28,8 @@ import java.util.function.Function;
  * @param <T> The type this format will produce.
  */
 public interface Format<T> {
+
+
     /**
      * Creates a new value of a type by reading from a PacketBuf.
      *
@@ -134,6 +137,14 @@ public interface Format<T> {
         );
     }
 
+    static Format<UUID> uuid() {
+        return Format.ofSimple(
+                PacketBuf::readUuid,
+                PacketBuf::writeUuid,
+                f -> Long.BYTES * 2
+        );
+    }
+
     static Format<String> string() {
         return Format.ofSimple(PacketBuf::readString, PacketBuf::writeString, it ->
             it.getBytes(StandardCharsets.UTF_8).length
@@ -144,7 +155,7 @@ public interface Format<T> {
         return Format.ofSimple(
             buf -> buf.writeOffset >= buf.buffer.length
                 ? Optional.<OutputType>empty()
-                : Optional.of((OutputType) subformat.read(buf)),
+                : Optional.of(subformat.read(buf)),
             (buf, ty) -> ty.ifPresent(inner -> subformat.write(buf, inner)),
             ty -> ty.map(subformat::size).orElse(0)
         );
@@ -167,6 +178,7 @@ public interface Format<T> {
                 }
             },
             ty -> Arrays.stream(ty).mapToInt(subformat::size).sum()
+                    + calculateVarIntSize(ty.length)
         );
     }
 }

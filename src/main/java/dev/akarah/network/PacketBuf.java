@@ -217,7 +217,7 @@ public class PacketBuf {
     }
 
     public PacketBuf writeString(String value) {
-        writeVarInt(value.length());
+        writeVarInt(value.getBytes(StandardCharsets.UTF_8).length);
         for(var bv : value.getBytes(StandardCharsets.UTF_8))
             writeByte(bv);
         return this;

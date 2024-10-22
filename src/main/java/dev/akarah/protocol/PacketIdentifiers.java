@@ -2,6 +2,8 @@ package dev.akarah.protocol;
 
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
+import dev.akarah.protocol.login.ClientboundLoginSuccess;
+import dev.akarah.protocol.login.ServerboundLoginStart;
 import dev.akarah.protocol.meta.*;
 import dev.akarah.protocol.status.ClientboundPongResponse;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
@@ -48,6 +50,9 @@ public class PacketIdentifiers {
 
 
         registerCPacket(ClientboundDisconnectLogin.class, PacketStage.LOGIN);
+        CLIENTBOUND_ID.login().getAndIncrement();
+        registerCPacket(ClientboundLoginSuccess.class, PacketStage.LOGIN);
+        registerSPacket(ServerboundLoginStart.class, PacketStage.LOGIN);
     }
 
     static void registerPacket(
@@ -129,5 +134,9 @@ public class PacketIdentifiers {
 
     public static Class<? extends Packet> getPacketById(int packetId, PacketFlow packetFlow, PacketStage packetStage) {
         return ID_TO_CLASS.get(new PacketHashId(packetId, packetFlow, packetStage)).packetClass();
+    }
+
+    public static int getIdByPacket(Class<? extends Packet> packetClass, PacketFlow packetFlow, PacketStage packetStage) {
+        return CLASS_TO_ID.get(new PacketHashClass(packetClass, packetFlow, packetStage)).packetId();
     }
 }

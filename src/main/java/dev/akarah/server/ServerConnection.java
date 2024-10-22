@@ -58,15 +58,28 @@ public class ServerConnection {
         if(this.socket.isClosed())
             return;
         try {
+            var id = PacketIdentifiers.getIdByPacket(packet.getClass(), PacketFlow.CLIENTBOUND, this.stage);
+            System.out.println("SENDING PACKET DATA @ " + this + " ------------");
             Format<ClientboundPacket> format = (Format<ClientboundPacket>) packet.format();
             var size = format.size(packet);
+            System.out.println("Packet: " + packet);
+            System.out.println("Format: " + format);
+            System.out.println("Size: " + size);
             var packetBuf = PacketBuf.allocate(
                 format.size(packet) + Format.calculateVarIntSize(size)
+                    + Format.calculateVarIntSize(id)
             );
+            System.out.println("Buf array #1: " + Arrays.toString(packetBuf.toArray()));
             packetBuf.writeVarInt(size + Format.calculateVarIntSize(size));
+            packetBuf.writeVarInt(id);
+            System.out.println("Buf array #2: " + Arrays.toString(packetBuf.toArray()));
             format.write(packetBuf, packet);
-            outputStream.write(packetBuf.toArray());
+            System.out.println("Buf array #3: " + Arrays.toString(packetBuf.toArray()));
+            for(var b : packetBuf.toArray())
+                outputStream.write(b);
+            System.out.println("END SENDING PACKET DATA @ " + this + " ------------");
         } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -87,7 +100,7 @@ public class ServerConnection {
             var packetBuf = PacketBuf.allocate(packetLength);
             for(int i = 0; i < packetLength; i++) {
                 var v = readByte();
-                System.out.println(this + " Byte read: " + v);
+                System.out.println(this + " Progress: " + i + " / " + (packetLength-1));
                 if(v == -1)
                     return;
                 packetBuf.writeByte((byte) v);
@@ -128,16 +141,17 @@ public class ServerConnection {
         byte currentByte;
 
         while (true) {
-            var d = readByte();
-            if(d == 1 && value == 0)
-                return d;
-            System.out.println("d = " + d);
-            if(d == -1)
-                return -1;
-            currentByte = (byte) d;
-            value |= (currentByte & 0x7F) << position;
-            if ((currentByte & 0x8F) == 0) break;
+            var rb = readByte();
+            if(rb == -1) {
+                throw new RuntimeException("socket ended?");
+            }
+            currentByte = (byte) rb;
+            value |= (currentByte & PacketBuf.SEGMENT_BITS) << position;
+
+            if ((currentByte & PacketBuf.CONTINUE_BIT) == 0) break;
+
             position += 7;
+
             if (position >= 32) throw new RuntimeException("VarInt is too big");
         }
 
