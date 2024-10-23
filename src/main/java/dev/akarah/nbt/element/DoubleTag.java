@@ -2,6 +2,7 @@ package dev.akarah.nbt.element;
 
 import dev.akarah.network.PacketBuf;
 
+// todo: fix double tag causing off-by-one error
 public class DoubleTag extends NbtTag {
     double value;
 
@@ -25,6 +26,6 @@ public class DoubleTag extends NbtTag {
 
     @Override
     public int size() {
-        return 8;
+        return Double.BYTES;
     }
 }

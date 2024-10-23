@@ -25,6 +25,6 @@ public class LongTag extends NbtTag {
 
     @Override
     public int size() {
-        return 8;
+        return Long.BYTES;
     }
 }

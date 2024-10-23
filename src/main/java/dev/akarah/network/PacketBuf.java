@@ -11,6 +11,7 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,6 +40,7 @@ public class PacketBuf {
     public static PacketBuf allocate(int size) {
         var pb = new PacketBuf();
         pb.buffer = new byte[size];
+        Arrays.fill(pb.buffer, (byte) 0xFE);
         return pb;
     }
 
@@ -115,7 +117,7 @@ public class PacketBuf {
     }
 
     public PacketBuf writeUnsignedShort(int value) {
-        VH_SHORT.set(this.buffer, writeOffset, (short) (value & 0xFFFF));
+        VH_SHORT.set(this.buffer, writeOffset, (short) value);
         writeOffset += Short.BYTES;
         return this;
     }
@@ -169,7 +171,9 @@ public class PacketBuf {
     }
 
     public PacketBuf writeDouble(double value) {
+        System.out.println("pred: " + Arrays.toString(this.buffer));
         VH_DOUBLE.set(this.buffer, writeOffset, value);
+        System.out.println("post: " + Arrays.toString(this.buffer));
         writeOffset += Double.BYTES;
         return this;
     }

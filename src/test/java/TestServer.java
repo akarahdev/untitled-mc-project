@@ -1,3 +1,4 @@
+import dev.akarah.nbt.element.*;
 import dev.akarah.protocol.configuration.*;
 import dev.akarah.protocol.handshaking.ServerboundHandshake;
 import dev.akarah.protocol.login.ClientboundDisconnectLogin;
@@ -8,6 +9,7 @@ import dev.akarah.protocol.meta.PacketStage;
 import dev.akarah.protocol.play.ClientboundLoginPlay;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundStatusRequest;
+import dev.akarah.registry.RegistryView;
 import dev.akarah.registry.types.DimensionType;
 import dev.akarah.server.MinecraftServer;
 
@@ -46,19 +48,24 @@ public class TestServer {
         });
 
         server.eventManager().registerEvent(ServerboundClientInformation.class, packetEvent -> {
-            packetEvent.connection().registryView()
-                .dimensionType(
-                    "minecraft:overworld",
-                    new DimensionType(
-                        -128,
-                        1233,
-                        true,
-                        true,
-                        DimensionType.BaseDimension.OVERWORLD,
-                        15,
-                        false
+            packetEvent.connection().send(new ClientboundRegistryData(
+                    "minecraft:dimension_type",
+                    List.of(
+                            new ClientboundRegistryData.RegistryEntry(
+                                    "minecraft:overworld",
+                                    Optional.of(
+                                            // note for whe i return:
+                                            // for some reason, changing the length of the "whatt_time"
+                                            // string causes different errors, try messing with it
+                                            new CompoundTag()
+                                                    .put("whatt_time", new LongTag(0)) // not problem
+                                                    .put("has_skylight", new ByteTag(true ? (byte) 1 : 0)) // not problem
+                                                    .put("has_ceiling", new ByteTag((byte) 1))
+                                                    .put("coordinate_scale", new DoubleTag(1)) // ?
+                                    )
+                            )
                     )
-                );
+            ));
             packetEvent.connection().sendRegistryView();
             packetEvent.connection().send(new ClientboundFinishConfiguration());
         });

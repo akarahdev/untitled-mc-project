@@ -25,6 +25,6 @@ public class ByteTag extends NbtTag {
 
     @Override
     public int size() {
-        return 1;
+        return Byte.BYTES;
     }
 }
