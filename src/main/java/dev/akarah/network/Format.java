@@ -148,7 +148,7 @@ public interface Format<T> {
     static Format<CompoundTag> nbtCompound() {
         return Format.ofSimple(
             buf -> {
-                // read compound tag
+                // read compound tag id
                 buf.readByte();
                 return new CompoundTag(buf);
             },
@@ -156,7 +156,7 @@ public interface Format<T> {
                 buf.writeByte((byte) Tag.COMPOUND.id());
                 nbt.write(buf);
             },
-            (ty) -> 0
+            (ty) -> ty.size() + 1
         );
     }
 
@@ -197,7 +197,7 @@ public interface Format<T> {
                     () -> buf.writeByte((byte) 0)
                 );
             },
-            ty -> ty.map(subformat::size).map(it -> it + 1).orElse(1)
+            ty -> ty.map(subformat::size).orElse(0) + 1
         );
     }
 
@@ -219,7 +219,7 @@ public interface Format<T> {
                 var len = buf.readVarInt();
                 var arr = new ArrayList<ArrayType>(len);
                 for(int i = 0; i < len; i++) {
-                    arr.set(i, subformat.read(buf));
+                    arr.add(subformat.read(buf));
                 }
                 return arr;
             },

@@ -15,16 +15,18 @@ public class CompoundTag extends NbtTag {
 
     public CompoundTag(PacketBuf buf) {
         try {
-            var entryTag = Tag.TAGS.get(buf.readByte());
-            if(entryTag.equals(Tag.END))
-                return;
-            var nameLength = buf.readUnsignedShort();
-            var nameArr = new byte[nameLength];
-            for(int i = 0; i < nameLength; i++)
-                nameArr[i] = buf.readByte();
-            var name = new String(nameArr, StandardCharsets.UTF_8);
-            var value = entryTag.getTypeClass().getConstructor(PacketBuf.class).newInstance(buf);
-            this.value.put(name, value);
+            while(true) {
+                var entryTag = Tag.TAGS.get(buf.readByte());
+                if(entryTag.equals(Tag.END))
+                    return;
+                var nameLength = buf.readUnsignedShort();
+                var nameArr = new byte[nameLength];
+                for(int i = 0; i < nameLength; i++)
+                    nameArr[i] = buf.readByte();
+                var name = new String(nameArr, StandardCharsets.UTF_8);
+                var value = entryTag.getTypeClass().getConstructor(PacketBuf.class).newInstance(buf);
+                this.value.put(name, value);
+            }
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
             throw new RuntimeException(exception);
         }
@@ -48,24 +50,22 @@ public class CompoundTag extends NbtTag {
     public void write(PacketBuf buffer) {
         for(var entryKey : value.keySet()) {
             var entryValue = value.get(entryKey);
+            System.out.println("k: " + entryKey + " v: " + entryValue);
             buffer.writeByte((byte) entryValue.tag().id());
-            buffer.writeUnsignedShort((short) entryKey.getBytes(StandardCharsets.UTF_8).length);
-            for(var b : entryKey.getBytes(StandardCharsets.UTF_8)) {
-                buffer.writeByte(b);
-            }
+            new StringTag(entryKey).write(buffer);
             entryValue.write(buffer);
         }
-        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) Tag.END.id());
     }
 
     @Override
     public int size() {
         return
-            // string length + string prefix + value tag
-            this.value.keySet().stream().mapToInt(it -> it.getBytes(StandardCharsets.UTF_8).length + 3).sum()
-                // raw value size
-            + this.value.values().stream().mapToInt(NbtTag::size).sum()
-                // end tag byte
+            // string length + string forced prefix
+            this.value.keySet().stream().mapToInt(it -> new StringTag(it).size()).sum()
+                // raw value size + value tag
+            + this.value.values().stream().mapToInt(it -> it.size() + 1).sum()
+                // end tag
             + 1;
     }
 }

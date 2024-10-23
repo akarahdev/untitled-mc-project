@@ -115,7 +115,7 @@ public class PacketBuf {
     }
 
     public PacketBuf writeUnsignedShort(int value) {
-        VH_SHORT.set(this.buffer, writeOffset, (short) value & 0xFFFF);
+        VH_SHORT.set(this.buffer, writeOffset, (short) (value & 0xFFFF));
         writeOffset += Short.BYTES;
         return this;
     }

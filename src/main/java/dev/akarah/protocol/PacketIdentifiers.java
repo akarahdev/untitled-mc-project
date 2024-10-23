@@ -67,6 +67,8 @@ public class PacketIdentifiers {
         registerCPacket(ClientboundKeepAliveConfiguration.class, PacketStage.CONFIGURATION);
         registerCPacket(ClientboundPingConfiguration.class, PacketStage.CONFIGURATION);
         registerCPacket(ClientboundResetChat.class, PacketStage.CONFIGURATION);
+        registerCPacket(ClientboundRegistryData.class, PacketStage.CONFIGURATION);
+
 
         registerSPacket(ServerboundClientInformation.class, PacketStage.CONFIGURATION);
         registerSPacket(ServerboundCookieResponse.class, PacketStage.CONFIGURATION);

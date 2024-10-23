@@ -37,6 +37,6 @@ public class StringTag extends NbtTag {
             // actual string
             this.value.getBytes(StandardCharsets.UTF_8).length
             // length prefix
-            + 2;
+            + Short.BYTES;
     }
 }

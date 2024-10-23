@@ -8,6 +8,7 @@ import dev.akarah.protocol.PacketIdentifiers;
 import dev.akarah.protocol.ServerboundPacket;
 import dev.akarah.protocol.meta.PacketFlow;
 import dev.akarah.protocol.meta.PacketStage;
+import dev.akarah.registry.RegistryView;
 import dev.akarah.types.ApiUsage;
 import dev.akarah.util.ExceptionUtils;
 
@@ -25,6 +26,8 @@ public class ServerConnection {
 
     InputStream inputStream;
     OutputStream outputStream;
+
+    RegistryView registryView = new RegistryView();
 
     @ApiUsage.Internal
     protected ServerConnection(Socket socket, MinecraftServer minecraftServer) {
@@ -44,6 +47,14 @@ public class ServerConnection {
         var r = this.inputStream.read();
         System.out.println(this + " FULL R: " + r);
         return r;
+    }
+
+    public RegistryView registryView() {
+        return this.registryView;
+    }
+
+    public void sendRegistryView() {
+        this.registryView.sendToConnection(this);
     }
 
     public PacketStage stage() {

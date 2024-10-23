@@ -8,6 +8,7 @@ import dev.akarah.protocol.meta.PacketStage;
 import dev.akarah.protocol.play.ClientboundLoginPlay;
 import dev.akarah.protocol.status.ClientboundStatusResponse;
 import dev.akarah.protocol.status.ServerboundStatusRequest;
+import dev.akarah.registry.types.DimensionType;
 import dev.akarah.server.MinecraftServer;
 
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,20 @@ public class TestServer {
         });
 
         server.eventManager().registerEvent(ServerboundClientInformation.class, packetEvent -> {
+            packetEvent.connection().registryView()
+                .dimensionType(
+                    "minecraft:overworld",
+                    new DimensionType(
+                        -128,
+                        1233,
+                        true,
+                        true,
+                        DimensionType.BaseDimension.OVERWORLD,
+                        15,
+                        false
+                    )
+                );
+            packetEvent.connection().sendRegistryView();
             packetEvent.connection().send(new ClientboundFinishConfiguration());
         });
 

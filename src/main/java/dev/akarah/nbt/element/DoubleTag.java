@@ -25,6 +25,6 @@ public class DoubleTag extends NbtTag {
 
     @Override
     public int size() {
-        return 4;
+        return 8;
     }
 }
