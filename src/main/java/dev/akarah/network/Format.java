@@ -120,12 +120,15 @@ public interface Format<T> {
     static int calculateVarIntSize(long value) {
         int size = 0;
         while (true) {
-            if ((value & ~((long) PacketBuf.SEGMENT_BITS)) == 0) {
+            if ((value & ~PacketBuf.SEGMENT_BITS) == 0) {
                 size++;
                 return size;
             }
+
             size++;
-            value >>= 7;
+
+            // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
+            value >>>= 7;
         }
     }
 

@@ -69,31 +69,45 @@ public class ServerConnection {
         if(this.socket.isClosed())
             return;
         try {
-            var id = PacketIdentifiers.getIdByPacket(packet.getClass(), PacketFlow.CLIENTBOUND, this.stage);
+            var packetId = PacketIdentifiers.getIdByPacket(packet.getClass(), PacketFlow.CLIENTBOUND, this.stage);
             System.out.println("SENDING PACKET DATA @ " + this + " ------------");
             Format<ClientboundPacket> format = (Format<ClientboundPacket>) packet.format();
-            var size = format.size(packet);
-            System.out.println("Packet: " + packet);
-            System.out.println("Format: " + format);
-            System.out.println("Size: " + size);
-            var packetBuf = PacketBuf.allocate(
-                format.size(packet) + Format.calculateVarIntSize(size)
-                    + Format.calculateVarIntSize(id)
-            );
-            System.out.println("Buf array #1: " + Arrays.toString(packetBuf.toArray()));
-            packetBuf.writeVarInt(size + Format.calculateVarIntSize(size));
-            packetBuf.writeVarInt(id);
-            System.out.println("Buf array #2: " + Arrays.toString(packetBuf.toArray()));
-            format.write(packetBuf, packet);
-            System.out.println("Buf array #3: " + Arrays.toString(packetBuf.toArray()));
-            for(var b : packetBuf.toArray())
-                outputStream.write(b);
+
+            var basePacketSize = format.size(packet);
+            var packetIdSize = Format.calculateVarIntSize(packetId);
+            var lengthOutput = basePacketSize + packetIdSize;
+
+            var buf = PacketBuf.allocate(lengthOutput + Format.calculateVarIntSize(lengthOutput));
+            buf.writeVarInt(lengthOutput);
+            buf.writeVarInt(packetId);
+            format.write(buf, packet);
+
+            this.outputStream.write(buf.toArray());
             System.out.println("END SENDING PACKET DATA @ " + this + " ------------");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
+
+    //            var packetSize = format.size(packet);
+//            var packetMetadataSize =
+//                Format.calculateVarIntSize(packetSize + Format.calculateVarIntSize(packetSize))
+//                + Format.calculateVarIntSize(id);
+//            var totalSize = packetSize + packetMetadataSize;
+//            System.out.println("Packet: " + packet);
+//            System.out.println("Format: " + format);
+//            System.out.println("Packet Size: " + packetSize);
+//            var packetBuf = PacketBuf.allocate(totalSize);
+//            System.out.println("Allocated size: " + packetBuf.toArray().length + " " + format.size(packet) + " " + totalSize);
+//            System.out.println("Buf array #1: " + Arrays.toString(packetBuf.toArray()));
+//            packetBuf.writeVarInt(totalSize);
+//            packetBuf.writeVarInt(id);
+//            System.out.println("Buf array #2: " + Arrays.toString(packetBuf.toArray()));
+//            format.write(packetBuf, packet);
+//            System.out.println("Buf array #3: " + Arrays.toString(packetBuf.toArray()));
+//            for(var b : packetBuf.toArray())
+//                outputStream.write(b);
 
     @ApiUsage.Internal
     protected void socketLoop() throws IOException {
