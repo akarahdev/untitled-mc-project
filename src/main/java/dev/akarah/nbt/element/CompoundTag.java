@@ -4,6 +4,7 @@ import dev.akarah.network.PacketBuf;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class CompoundTag extends NbtTag {
@@ -51,9 +52,13 @@ public class CompoundTag extends NbtTag {
         for(var entryKey : value.keySet()) {
             var entryValue = value.get(entryKey);
             System.out.println("k: " + entryKey + " v: " + entryValue);
+            System.out.println("pre-write: " + Arrays.toString(buffer.toArray()));
             buffer.writeByte((byte) entryValue.tag().id());
             new StringTag(entryKey).write(buffer);
+            System.out.println("post-key write: " + Arrays.toString(buffer.toArray()));
             entryValue.write(buffer);
+            System.out.println("post-value write: " + Arrays.toString(buffer.toArray()));
+
         }
         buffer.writeByte((byte) Tag.END.id());
     }

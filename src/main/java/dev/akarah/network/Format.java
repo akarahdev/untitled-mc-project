@@ -197,7 +197,9 @@ public interface Format<T> {
                     () -> buf.writeByte((byte) 0)
                 );
             },
-            ty -> ty.map(subformat::size).orElse(0) + 1
+            ty -> {
+                return ty.map(outputType -> subformat.size(outputType) + 1).orElse(1);
+            }
         );
     }
 

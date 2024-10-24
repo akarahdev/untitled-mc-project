@@ -171,9 +171,7 @@ public class PacketBuf {
     }
 
     public PacketBuf writeDouble(double value) {
-        System.out.println("pred: " + Arrays.toString(this.buffer));
         VH_DOUBLE.set(this.buffer, writeOffset, value);
-        System.out.println("post: " + Arrays.toString(this.buffer));
         writeOffset += Double.BYTES;
         return this;
     }

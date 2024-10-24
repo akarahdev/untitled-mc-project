@@ -48,8 +48,15 @@ public class TestServer {
         });
 
         server.eventManager().registerEvent(ServerboundClientInformation.class, packetEvent -> {
+            var tag = new CompoundTag()
+                .put("sig_time", new LongTag(49847)) // not problem
+                .put("haswing_skylight", new ByteTag((byte) 17)) // not problem
+                .put("has_ceilnsio", new DoubleTag(3823789))
+                .put("coordinate_scalee", new ByteTag((byte) 1)); // ?
+
+            System.out.println("Tag size: " + tag.size());
             packetEvent.connection().send(new ClientboundRegistryData(
-                    "minecraft:dimension_type",
+                    "minecraft:dimen_typ",
                     List.of(
                             new ClientboundRegistryData.RegistryEntry(
                                     "minecraft:overworld",
@@ -57,11 +64,7 @@ public class TestServer {
                                             // note for whe i return:
                                             // for some reason, changing the length of the "whatt_time"
                                             // string causes different errors, try messing with it
-                                            new CompoundTag()
-                                                    .put("whatt_time", new LongTag(0)) // not problem
-                                                    .put("has_skylight", new ByteTag(true ? (byte) 1 : 0)) // not problem
-                                                    .put("has_ceiling", new ByteTag((byte) 1))
-                                                    .put("coordinate_scale", new DoubleTag(1)) // ?
+                                            tag
                                     )
                             )
                     )
