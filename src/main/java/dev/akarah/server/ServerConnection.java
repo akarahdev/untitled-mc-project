@@ -45,7 +45,6 @@ public class ServerConnection {
 
     public int readByte() throws IOException {
         var r = this.inputStream.read();
-        System.out.println(this + " FULL R: " + r);
         return r;
     }
 
@@ -70,7 +69,6 @@ public class ServerConnection {
             return;
         try {
             var packetId = PacketIdentifiers.getIdByPacket(packet.getClass(), PacketFlow.CLIENTBOUND, this.stage);
-            System.out.println("SENDING PACKET DATA @ " + this + " ------------");
             Format<ClientboundPacket> format = (Format<ClientboundPacket>) packet.format();
 
             var basePacketSize = format.size(packet);
@@ -83,7 +81,6 @@ public class ServerConnection {
             format.write(buf, packet);
 
             this.outputStream.write(buf.toArray());
-            System.out.println("END SENDING PACKET DATA @ " + this + " ------------");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -115,34 +112,25 @@ public class ServerConnection {
             if(this.socket.isClosed())
                 break;
 
-            System.out.println("PACKET DATA TRACE @ " + this + " ----------");
-
             var packetLength = readVarIntFromStream();
             if(packetLength == -1)
                 break;
-            System.out.println(this + " Packet length: " + packetLength);
 
             var packetBuf = PacketBuf.allocate(packetLength);
             for(int i = 0; i < packetLength; i++) {
                 var v = readByte();
-                System.out.println(this + " Progress: " + i + " / " + (packetLength-1));
                 if(v == -1)
                     return;
                 packetBuf.writeByte((byte) v);
             }
 
 
-            System.out.println(this + " Packet buf: " + Arrays.toString(packetBuf.toArray()));
-
             var packetId = packetBuf.readVarInt();
-            System.out.println(this + " Read packet id: " + packetId);
 
             var packetClass = PacketIdentifiers.getPacketById(packetId, PacketFlow.SERVERBOUND, this.stage);
             var rawField = ExceptionUtils.moveToRuntime(() -> packetClass.getField("FORMAT").get(null));
             var packetFormat = (Format<? extends ServerboundPacket>) rawField;
-            System.out.println(this + " Packet class: " + packetClass.getName());
             var packetData = packetFormat.read(packetBuf);
-            System.out.println(this + " Packet data: " + packetData);
             for(var event : minecraftServer.eventManager().serverboundPacketEvents) {
                 try {
                     if(event.packetClass().isInstance(packetData))
@@ -151,8 +139,6 @@ public class ServerConnection {
                     e.printStackTrace();
                 }
             }
-
-            System.out.println("PACKET DATA TRACE END " + this.stage + " @ " + this + " ----------");
 
             if(this.socket.isClosed())
                 break;

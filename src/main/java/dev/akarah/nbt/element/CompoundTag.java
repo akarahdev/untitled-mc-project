@@ -51,13 +51,9 @@ public class CompoundTag extends NbtTag {
     public void write(PacketBuf buffer) {
         for(var entryKey : value.keySet()) {
             var entryValue = value.get(entryKey);
-            System.out.println("k: " + entryKey + " v: " + entryValue);
-            System.out.println("pre-write: " + Arrays.toString(buffer.toArray()));
             buffer.writeByte((byte) entryValue.tag().id());
             new StringTag(entryKey).write(buffer);
-            System.out.println("post-key write: " + Arrays.toString(buffer.toArray()));
             entryValue.write(buffer);
-            System.out.println("post-value write: " + Arrays.toString(buffer.toArray()));
 
         }
         buffer.writeByte((byte) Tag.END.id());
